@@ -1,13 +1,92 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lab Sémantique</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Micro-Logique des Textes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-[#FAF9F5] text-stone-800 p-4 font-sans text-sm">
 
+<div x-data="semanticAnnotator()" x-init="initIcons()" class="max-w-7xl mx-auto space-y-6">
+    
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-stone-200 pb-4 gap-2">
+        <div>
+            <span class="text-[9px] font-mono font-black uppercase tracking-widest text-stone-400">Outil d'Extraction Sémantique</span>
+            <h1 class="text-xl font-serif font-black text-stone-900 uppercase">Micro-Logique des Textes</h1>
+        </div>
+        <span class="text-[10px] font-mono font-black text-stone-500 uppercase bg-stone-100 border border-stone-200 px-2.5 py-0.5 rounded-lg">
+            Startpage Widget Active
+        </span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
+        
+        <div class="lg:col-span-6 space-y-4">
+            
+            <div class="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="p-1 px-2 bg-amber-400 text-stone-900 text-[8px] font-mono font-bold rounded-full uppercase">Calque Actif</span>
+                        <h3 class="text-xs font-black text-stone-900 uppercase" x-text="activeLayer().name"></h3>
+                    </div>
+                    <p class="text-[11px] text-stone-500 mt-0.5" x-text="activeLayer().description"></p>
+                </div>
+                <div class="text-[10px] font-mono font-black bg-stone-100 text-stone-600 px-2 py-1 rounded-lg" x-text="activeLayer().tokens.length + ' jetons extraits'"></div>
+            </div>
+
+            <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm space-y-4">
+                <h2 class="text-[10px] font-mono font-black uppercase tracking-widest text-red-700 border-b border-stone-100 pb-2">
+                    📖 Corps de texte annoté
+                </h2>
+                <div class="space-y-4 leading-relaxed">
+                    <template x-for="p in paragraphs" :key="p.id">
+                        <div class="flex items-start gap-3">
+                            <span class="w-8 text-[9px] font-mono font-black text-stone-400 mt-1 select-none" x-text="'§ ' + p.id"></span>
+                            <div class="flex-1 text-stone-700">
+                                <template x-for="(word, idx) in splitText(p.text)" :key="idx">
+                                    <span 
+                                        x-text="word"
+                                        @click="isWhitespace(word) ? null : toggleWordSelection(p.id, idx)"
+                                        :class="getWordClass(p.id, idx, word)"
+                                        :style="getWordStyle(p.id, idx, word)"
+                                        :title="getWordTitle(p.id, idx, word)"
+                                    ></span>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <div class="bg-stone-50 border border-stone-200 rounded-2xl p-4 shadow-sm">
+                <div class="flex items-center justify-between pb-2 border-b border-stone-200 mb-3">
+                    <div class="flex items-center gap-1.5 text-stone-700">
+                        <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+                        <h4 class="text-[10px] font-mono font-black uppercase tracking-wider">Calques d'Analyse</h4>
+                    </div>
+                    <button @click="createLayer()" class="px-2 py-0.5 bg-white border border-stone-200 hover:border-amber-500 text-[9px] font-mono font-black rounded-md flex items-center gap-1 transition-all">
+                        <i data-lucide="plus" class="w-2.5 h-2.5"></i> Nouveau
+                    </button>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <template x-for="layer in layers" :key="layer.id">
+                        <button 
+                            @click="switchLayer(layer.id)"
+                            :class="layer.id === activeLayerId ? 'bg-amber-400 text-stone-950 border border-amber-500 font-extrabold shadow-sm' : 'bg-white border border-stone-200 text-stone-600 hover:border-stone-300'"
+                            class="px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all"
+                            x-text="layer.name + ' (' + layer.tokens.length + ')'"
+                        ></button>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-4 space-y-4">
+            
+            <div class="bg-stone-900 border border-stone-800 rounded-xl p-3 text-white flex items-center gap-2 shadow-sm">
+                <span class="text-xs">💎</span>
+                <div>
+                    <h4 class="text-[9px] font-mono font-black uppercase tracking-widest text-amber-400
